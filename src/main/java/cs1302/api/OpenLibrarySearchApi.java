@@ -53,7 +53,7 @@ public class OpenLibrarySearchApi {
         .setPrettyPrinting()                          // enable nice output when printing
         .create();                                    // builds and returns a Gson object
 
-    private static final String ENDPOINT = "https://openlibrary.org/search.json";
+    private static final String ENDPOINT = "https://api.thedogapi.com/v1/breeds";
 
     public static void main(String[] args) {
         OpenLibrarySearchApi
