@@ -6,6 +6,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.Pos;
 
 public class MainScreen extends Application {
 
@@ -21,12 +22,13 @@ public class MainScreen extends Application {
 
     public void init() {
         System.out.println("Executing init method");
-        this.mainHBox.getChildren().addAll(this.hScreen);
+        Platform.runLater(() -> this.mainHBox.getChildren().addAll(this.hScreen));
+        Platform.runLater(() -> mainHBox.setAlignment(Pos.CENTER));
     }
 
     public void start(Stage stage) {
         this.stage = stage;
-        this.scene = new Scene(this.mainHBox);
+        this.scene = new Scene(this.mainHBox, 1280, 700);
         this.stage.setOnCloseRequest(event -> Platform.exit());
         this.stage.setTitle("TravelGuru");
         this.stage.setScene(this.scene);
