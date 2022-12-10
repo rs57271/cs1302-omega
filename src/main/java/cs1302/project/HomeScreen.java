@@ -7,9 +7,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 import javafx.application.Platform;
@@ -80,16 +82,35 @@ public class HomeScreen extends VBox {
         String kinds;
     }
 
+    public static class Stations {
+        Meta meta;
+        Data[] data;
+    }
+
+    public static class Meta {
+        String generated;
+    }
+
+    public static class Data {
+        String id;
+        NameOfStation name;
+        String distance;
+    }
+
+    public static class NameOfStation {
+        String en;
+    }
+
     public HomeScreen() {
         super(30);
-        this.text = new Text("Travel Guru");
-        this.text.setFont(new Font(40));
-        this.tField = new TextField("Search for a city");
-        this.button = new Button("Go");
-        this.weatherVBox = new VBox(15);
-        this.attractionsVBox = new VBox(15);
-        this.titleForAttractionsVBox = new VBox();
-        this.titleForWeatherVBox = new VBox();
+        text = new Text("Travel Guru");
+        text.setFont(new Font(40));
+        tField = new TextField("Search for a city");
+        button = new Button("Go");
+        weatherVBox = new VBox(15);
+        attractionsVBox = new VBox(15);
+        titleForAttractionsVBox = new VBox();
+        titleForWeatherVBox = new VBox();
         titleForAttractionsVBox.setMaxWidth(800);
         titleForAttractionsVBox.setMaxHeight(200);
         titleForWeatherVBox.setMaxWidth(800);
@@ -98,9 +119,9 @@ public class HomeScreen extends VBox {
         titleForAttractionsVBox.setPrefHeight(200);
         titleForWeatherVBox.setPrefWidth(800);
         titleForWeatherVBox.setPrefHeight(200);
-        this.titleForWeatherVBox = new VBox();
-        this.tField.setPrefWidth(400);
-        this.tField.setMaxWidth(400);
+        titleForWeatherVBox = new VBox();
+        tField.setPrefWidth(400);
+        tField.setMaxWidth(400);
         Platform.runLater(() -> titleForWeatherVBox.getChildren().addAll(new Text("Current weather: "), weatherVBox));
         Platform.runLater(() -> titleForAttractionsVBox.getChildren().addAll(new Text("3 cool places to check out: "),
                 attractionsVBox));
@@ -109,21 +130,23 @@ public class HomeScreen extends VBox {
         Platform.runLater(
                 () -> this.getChildren().addAll(text, tField, button, titleForWeatherVBox, titleForAttractionsVBox));
         Platform.runLater(() -> this.setAlignment(Pos.BASELINE_CENTER));
-        Platform.runLater(() -> this.button.setOnAction(e -> getInfoOfCity(e)));
+        button.setOnAction(e -> {
+            getInfoOfCity(e);
+        });
     }
 
-    private static void getInfoOfCity(ActionEvent e) {
+    public static void getInfoOfCity(ActionEvent e) {
         String json = "";
         String json2 = "";
         String lon = "";
         String lat = "";
         String tFieldText = tField.getText();
         attractionsVBox.getChildren().clear();
-        weatherVBox.getChildren().clear();
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(
-                            "https://opentripmap-places-v1.p.rapidapi.com/en/places/geoname?name=" + tFieldText))
+                            "https://opentripmap-places-v1.p.rapidapi.com/en/places/geoname?name="
+                                    + URLEncoder.encode(tFieldText, StandardCharsets.UTF_8)))
                     .header("X-RapidAPI-Key", "c3ac180905msh73f17d19552d9fbp18596fjsndbedb539c487")
                     .header("X-RapidAPI-Host", "opentripmap-places-v1.p.rapidapi.com")
                     .method("GET", HttpRequest.BodyPublishers.noBody())
@@ -146,7 +169,7 @@ public class HomeScreen extends VBox {
                     .header("X-RapidAPI-Key",
                             "3591847edamsh482247611f3042ap1ff135jsn1acaa240a433")
                     .header("X-RapidAPI-Host", "opentripmap-places-v1.p.rapidapi.com")
-                    .method("GET", HttpRequest.BodyPublishers.noBody())
+                    .GET()
                     .build();
             HttpResponse<String> response = HttpClient.newHttpClient().send(request,
                     HttpResponse.BodyHandlers.ofString());
@@ -164,6 +187,46 @@ public class HomeScreen extends VBox {
                     i++;
                 }
             }
+        } catch (Exception exc) {
+            System.out.println("There was an exception!");
+            System.out.println(exc);
+        }
+        final String lonParam = lon;
+        final String latParam = lat;
+        getWeatherOfSpecifiedLocation(lonParam, latParam);
+    }
+
+    public static void getWeatherOfSpecifiedLocation(String lon, String lat) {
+        String jsonForStation = "";
+        String stationId = "";
+        weatherVBox.getChildren().clear();
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://meteostat.p.rapidapi.com/stations/nearby?lat=" + lat + "&lon=" + lon))
+                    .header("X-RapidAPI-Key", "3591847edamsh482247611f3042ap1ff135jsn1acaa240a433")
+                    .header("X-RapidAPI-Host", "meteostat.p.rapidapi.com")
+                    .method("GET", HttpRequest.BodyPublishers.noBody())
+                    .build();
+            HttpResponse<String> response = HttpClient.newHttpClient().send(request,
+                    HttpResponse.BodyHandlers.ofString());
+            jsonForStation = response.body();
+            Stations result = GSON.fromJson(jsonForStation, Stations.class);
+            stationId = result.data[0].id;
+        } catch (Exception exc) {
+            System.out.println("There was an exception!");
+            System.out.println(exc);
+        }
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://meteostat.p.rapidapi.com/stations/monthly?station=" + stationId
+                            + "&start=2020-01-01&end=2020-12-31"))
+                    .header("X-RapidAPI-Key", "3591847edamsh482247611f3042ap1ff135jsn1acaa240a433")
+                    .header("X-RapidAPI-Host", "meteostat.p.rapidapi.com")
+                    .method("GET", HttpRequest.BodyPublishers.noBody())
+                    .build();
+            HttpResponse<String> response = HttpClient.newHttpClient().send(request,
+                    HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
         } catch (Exception exc) {
             System.out.println("There was an exception!");
             System.out.println(exc);
