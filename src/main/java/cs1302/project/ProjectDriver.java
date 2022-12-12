@@ -2,10 +2,13 @@ package cs1302.project;
 
 import javafx.application.Application;
 
+/**
+ * Driver for running the project.
+ */
 public class ProjectDriver {
     /**
      * The main entry point of the application.
-     * 
+     * Launches the application.
      * @param args the command-line arguments to the application.
      */
     public static void main(String[] args) {

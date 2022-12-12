@@ -8,7 +8,5 @@ module cs1302.omega {
     requires transitive javafx.fxml;
     requires transitive javafx.web;
     requires transitive com.google.gson;
-    exports cs1302.api;
-    exports cs1302.game;
-    exports cs1302.omega;
+    exports cs1302.project;
 } // module
